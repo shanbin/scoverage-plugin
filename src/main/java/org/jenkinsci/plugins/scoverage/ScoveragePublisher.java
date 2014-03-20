@@ -11,9 +11,13 @@ import org.apache.commons.io.FileUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  */
@@ -51,7 +55,7 @@ public class ScoveragePublisher extends Recorder {
                 listener.getLogger().println("ERROR: cannot find scoverage report");
             }
 
-            ScoverageResult result = processReport(buildPath);
+            ScoverageResults result = processReport(build, buildPath);
             build.addAction(new ScoverageBuildAction(build, buildPath));
 
         } catch (IOException e) {
@@ -74,19 +78,39 @@ public class ScoveragePublisher extends Recorder {
         }
     }
 
-    private ScoverageResult processReport(FilePath path) {
+    private ScoverageResults processReport(AbstractBuild build, FilePath path) {
         String[] ext = {"html"};
+        double statement = 0;
+        double condition = 0;
         try {
+            // Fix HTML reports to use relative href
             Collection<File> list = FileUtils.listFiles(new File(path.toURI()), ext, true);
             for (File f : list) {
                 String content = FileUtils.readFileToString(f);
                 String pattern = f.getParent().replaceAll(".*scoverage-report", "scoverage-report");
                 FileUtils.writeStringToFile(f, content.replaceAll("href=\".*" + pattern + "/", "href=\""));
             }
+            // Parse scoverage.xml
+            File report = new File(path.child(reportDir).child(reportFile).toURI());
+            Pattern pattern = Pattern.compile("^.*scoverage statement-rate=\"(.+?)\" branch-rate=\"(.+?)\"");
+            BufferedReader in = new BufferedReader(new FileReader(report));
+            String line;
+            while ((line = in.readLine()) != null) {
+                boolean found = false;
+                Matcher matcher = pattern.matcher(line);
+                while (matcher.find()) {
+                    statement = Double.parseDouble(matcher.group(1));
+                    condition = Double.parseDouble(matcher.group(2));
+                    found = true;
+                }
+                if (found) {
+                    break;
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return new ScoverageResult();
+        return new ScoverageResults(statement, condition, build.number);
     }
 
     @Override
