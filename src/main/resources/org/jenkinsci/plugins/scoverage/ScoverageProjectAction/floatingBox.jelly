@@ -1,0 +1,17 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt" xmlns:local="local">
+    <j:set var="last" value="${from.lastSuccessfulBuildAction}"/>
+    <j:if test="${last != null}">
+        <p/>
+        <div class="test-trend-caption">Code Coverage</div>
+        <p/>
+        <table align="center">
+            <tr>
+            </tr>
+        </table>
+        <j:if test="${last.previousBuildAction != null }">
+            <p/>
+            <img src="scoverage/trendGraph/png" lazymap="scoverage/trendGraph/map"/>
+        </j:if>
+    </j:if>
+</j:jelly>
