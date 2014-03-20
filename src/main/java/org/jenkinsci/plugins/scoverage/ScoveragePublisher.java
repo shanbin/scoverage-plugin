@@ -55,8 +55,8 @@ public class ScoveragePublisher extends Recorder {
                 listener.getLogger().println("ERROR: cannot find scoverage report");
             }
 
-            ScoverageResults result = processReport(build, buildPath);
-            build.addAction(new ScoverageBuildAction(build, buildPath));
+            ScoverageResult result = processReport(build, buildPath);
+            build.addAction(new ScoverageBuildAction(build, buildPath, result));
 
         } catch (IOException e) {
             Util.displayIOException(e, listener);
@@ -78,7 +78,7 @@ public class ScoveragePublisher extends Recorder {
         }
     }
 
-    private ScoverageResults processReport(AbstractBuild build, FilePath path) {
+    private ScoverageResult processReport(AbstractBuild build, FilePath path) {
         String[] ext = {"html"};
         double statement = 0;
         double condition = 0;
@@ -110,7 +110,7 @@ public class ScoveragePublisher extends Recorder {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return new ScoverageResults(statement, condition, build.number);
+        return new ScoverageResult(statement, condition, build.number);
     }
 
     @Override

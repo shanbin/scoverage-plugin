@@ -7,11 +7,15 @@
         <p/>
         <table align="center">
             <tr>
+                <th>Statements</th>
+                <td>${last.result.statement}%</td>
+                <th>Conditionals</th>
+                <td>${last.result.condition}%</td>
             </tr>
         </table>
         <j:if test="${last.previousBuildAction != null }">
             <p/>
-            <img src="scoverage/trendGraph/png" lazymap="scoverage/trendGraph/map"/>
+            <a href="${app.rootUrl}job/${it.name}/scoverage"><img src="scoverage/trendGraph/png"/></a>
         </j:if>
     </j:if>
 </j:jelly>

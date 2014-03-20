@@ -10,6 +10,8 @@ import org.kohsuke.stapler.StaplerResponse;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ScoverageProjectAction implements Action {
 
@@ -44,7 +46,13 @@ public class ScoverageProjectAction implements Action {
     }
 
     public TrendGraph getTrendGraph() {
-        return new TrendGraph();
+        List<ScoverageResult> results = new ArrayList<ScoverageResult>();
+        ScoverageBuildAction action = getLastSuccessfulBuildAction();
+        while (action != null) {
+            results.add(action.getResult());
+            action = action.getPreviousBuildAction();
+        }
+        return new TrendGraph(results);
     }
 
     public DirectoryBrowserSupport doDynamic(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException, InterruptedException {

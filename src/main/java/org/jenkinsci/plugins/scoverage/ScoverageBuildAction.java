@@ -4,6 +4,7 @@ import hudson.FilePath;
 import hudson.model.AbstractBuild;
 import hudson.model.Action;
 import hudson.model.DirectoryBrowserSupport;
+import hudson.model.Result;
 import org.kohsuke.stapler.StaplerProxy;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -15,10 +16,12 @@ public class ScoverageBuildAction implements Action, StaplerProxy {
 
     private final AbstractBuild<?, ?> build;
     private final FilePath buildPath;
+    private final ScoverageResult result;
 
-    public ScoverageBuildAction(AbstractBuild<?, ?> build, FilePath buildPath) {
+    public ScoverageBuildAction(AbstractBuild<?, ?> build, FilePath buildPath, ScoverageResult result) {
         this.build = build;
         this.buildPath = buildPath;
+        this.result = result;
     }
 
     public String getIconFileName() {
@@ -37,8 +40,33 @@ public class ScoverageBuildAction implements Action, StaplerProxy {
         return null;
     }
 
+    public ScoverageResult getResult() {
+        return result;
+    }
+
     public AbstractBuild<?, ?> getBuild() {
         return build;
+    }
+
+    public ScoverageBuildAction getPreviousBuildAction() {
+        AbstractBuild<?, ?> b = build;
+        ScoverageBuildAction action = null;
+        while (true) {
+            b = b.getPreviousBuild();
+            if (b != null) {
+                if (b.getResult() != Result.SUCCESS) {
+                    continue;
+                }
+                ScoverageBuildAction act = b.getAction(ScoverageBuildAction.class);
+                if (act != null) {
+                    action = act;
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+        return action;
     }
 
     public DirectoryBrowserSupport doDynamic(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException, InterruptedException {

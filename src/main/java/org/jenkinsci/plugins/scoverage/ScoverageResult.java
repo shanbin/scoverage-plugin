@@ -1,15 +1,14 @@
 package org.jenkinsci.plugins.scoverage;
 
-public class ScoverageResults {
+public class ScoverageResult {
     final private double statement;
     final private double condition;
     final private int num;
 
-    public ScoverageResults(double statement, double condition, int num) {
+    public ScoverageResult(double statement, double condition, int num) {
         this.statement = statement;
         this.condition = condition;
         this.num = num;
-        System.out.println("statement = " + statement + " condition = " + condition + " build = " + num);
     }
 
     public double getStatement() {
