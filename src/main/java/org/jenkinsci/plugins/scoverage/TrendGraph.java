@@ -1,13 +1,10 @@
 package org.jenkinsci.plugins.scoverage;
 
-import hudson.util.ColorPalette;
 import hudson.util.Graph;
 import hudson.util.ShiftedCategoryAxis;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.CategoryAxis;
-import org.jfree.chart.axis.CategoryLabelPositions;
-import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.*;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.renderer.category.LineAndShapeRenderer;
@@ -26,7 +23,7 @@ public class TrendGraph extends Graph {
     private List<ScoverageResult> results = new ArrayList<ScoverageResult>();
 
     public TrendGraph(List<ScoverageResult> results) {
-        super(-1, 400, 200);
+        super(-1, 450, 200);
         this.results = results;
     }
 
@@ -34,7 +31,7 @@ public class TrendGraph extends Graph {
     protected JFreeChart createGraph() {
         int size = results.size();
 
-        final String[] rowKeys = {"Statements", "Conditionals"};
+        final String[] rowKeys = {"Statement Coverage", "Branch Coverage"};
         final String[] columnKeys = new String[size];
         double[][] data = new double[2][size];
 
@@ -76,11 +73,14 @@ public class TrendGraph extends Graph {
         rangeAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
         rangeAxis.setUpperBound(100);
         rangeAxis.setLowerBound(0);
+        rangeAxis.setTickUnit(new NumberTickUnit(10));
 
         final LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
         renderer.setBaseStroke(new BasicStroke(2.0f));
-        ColorPalette.apply(renderer);
+        renderer.setSeriesPaint(0, Color.BLUE);
+        renderer.setSeriesPaint(1, Color.RED);
 
+        plot.setRenderer(renderer);
         plot.setInsets(new RectangleInsets(5.0, 0, 0, 5.0));
 
         return chart;

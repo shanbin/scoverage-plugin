@@ -3,16 +3,31 @@
     <j:set var="last" value="${from.lastSuccessfulBuildAction}"/>
     <j:if test="${last != null}">
         <p/>
-        <div class="test-trend-caption">Code Coverage</div>
+        <div class="test-trend-caption">Scala Code Coverage</div>
         <p/>
-        <table align="center">
-            <tr>
-                <th>Statements</th>
-                <td>${last.result.statement}%</td>
-                <th>Conditionals</th>
-                <td>${last.result.condition}%</td>
-            </tr>
-        </table>
+        <div style="border: 1px solid #eee; ">
+            <table style="padding: 0 10px; padding-top: 5px; width:480px;">
+                <tr>
+                    <th align="left">Statement Coverage</th>
+                    <td align="right">${last.result.statement}%</td>
+                </tr>
+                <tr>
+                    <td width="${last.result.statement}%" style="background-color:#81F781;">&amp;nbsp;</td>
+                    <td width="${100-last.result.statement}%" style="background-color:#F78181;">&amp;nbsp;</td>
+                </tr>
+            </table>
+            <table style="padding: 0 10px; padding-top: 5px; width:480px;">
+                <tr>
+                    <th align="left">Branch Coverage</th>
+                    <td align="right">${last.result.condition}%</td>
+                </tr>
+                <tr>
+                    <td width="${last.result.condition}%" style="background-color:#81F781;">&amp;nbsp;</td>
+                    <td width="${100-last.result.condition}%" style="background-color:#F78181;">&amp;nbsp;</td>
+                </tr>
+            </table>
+            <p/>
+        </div>
         <j:if test="${last.previousBuildAction != null }">
             <p/>
             <a href="${app.rootUrl}job/${it.name}/scoverage"><img src="scoverage/trendGraph/png"/></a>
