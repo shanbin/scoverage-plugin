@@ -23,7 +23,7 @@ public class TrendGraph extends Graph {
     private List<ScoverageResult> results = new ArrayList<ScoverageResult>();
 
     public TrendGraph(List<ScoverageResult> results) {
-        super(-1, 450, 200);
+        super(-1, 420, 200);
         this.results = results;
     }
 

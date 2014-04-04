@@ -6,7 +6,7 @@
         <div class="test-trend-caption">Scala Code Coverage</div>
         <p/>
         <div style="border: 1px solid #eee; ">
-            <table style="padding: 0 10px; padding-top: 5px; width:480px;">
+            <table style="padding: 0 10px; padding-top: 5px; width:450px;">
                 <tr>
                     <th align="left">Statement Coverage</th>
                     <td align="right">${last.result.statement}%</td>
@@ -16,7 +16,7 @@
                     <td width="${100-last.result.statement}%" style="background-color:#F78181;">&amp;nbsp;</td>
                 </tr>
             </table>
-            <table style="padding: 0 10px; padding-top: 5px; width:480px;">
+            <table style="padding: 0 10px; padding-top: 5px; width:450px;">
                 <tr>
                     <th align="left">Branch Coverage</th>
                     <td align="right">${last.result.condition}%</td>

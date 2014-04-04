@@ -92,7 +92,7 @@ public class ScoveragePublisher extends Recorder {
             }
             // Parse scoverage.xml
             File report = new File(path.child(reportDir).child(reportFile).toURI());
-            Pattern pattern = Pattern.compile("^.*scoverage statement-rate=\"(.+?)\" branch-rate=\"(.+?)\"");
+            Pattern pattern = Pattern.compile("^.* statement-rate=\"(.+?)\" branch-rate=\"(.+?)\"");
             BufferedReader in = new BufferedReader(new FileReader(report));
             String line;
             while ((line = in.readLine()) != null) {
