@@ -71,7 +71,9 @@ public class ScoveragePublisher extends Recorder {
     private boolean copyReport(FilePath coverageReport, FilePath buildPath, BuildListener listener) throws IOException, InterruptedException {
         if (coverageReport.exists()) {
             final FilePath parentDir = coverageReport.getParent();
-            parentDir.copyRecursiveTo("**/*", buildPath);
+            final FilePath toFile = buildPath.child(getReportFile());
+            parentDir.copyRecursiveTo("**/*", buildPath); // copy HTML report
+            coverageReport.child(getReportFile()).copyTo(toFile); // copy XML report
             return true;
         } else {
             return false;
@@ -91,7 +93,7 @@ public class ScoveragePublisher extends Recorder {
                 FileUtils.writeStringToFile(f, content.replaceAll("href=\".*" + pattern + "/", "href=\""));
             }
             // Parse scoverage.xml
-            File report = new File(path.child(reportDir).child(reportFile).toURI());
+            File report = new File(path.child(reportFile).toURI());
             Pattern pattern = Pattern.compile("^.* statement-rate=\"(.+?)\" branch-rate=\"(.+?)\"");
             BufferedReader in = new BufferedReader(new FileReader(report));
             String line;
