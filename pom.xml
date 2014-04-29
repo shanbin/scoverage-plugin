@@ -8,6 +8,7 @@
 
   <artifactId>scoverage</artifactId>
   <version>1.0.2</version>
+  <name>Scoverage Plugin</name>
   <packaging>hpi</packaging>
   <url>http://wiki.jenkins-ci.org/display/JENKINS/Scoverage+Plugin</url>
 
