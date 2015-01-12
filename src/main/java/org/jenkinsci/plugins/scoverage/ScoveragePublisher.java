@@ -5,16 +5,16 @@ import hudson.Launcher;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.*;
+import hudson.remoting.VirtualChannel;
 import hudson.tasks.*;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -68,12 +68,36 @@ public class ScoveragePublisher extends Recorder {
         return true;
     }
 
-    private boolean copyReport(FilePath coverageReport, FilePath buildPath, BuildListener listener) throws IOException, InterruptedException {
-        if (coverageReport.exists()) {
-            final FilePath parentDir = coverageReport.getParent();
+    private static final class ScovFinder implements FilePath.FileCallable<File> {
+        private static final long serialVersionUID = 1;
+        public File invoke(File dir, VirtualChannel channel) {
+            Collection<File> list = FileUtils.listFiles(dir, new IOFileFilter() {
+                public boolean accept(File f) {
+                    try {
+                        return f.isFile() && f.getName().equals("index.html")
+                                          && FileUtils.readFileToString(f).contains("Scoverage Code Coverage");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        return false;
+                    }
+                }
+                public boolean accept(File dir, String s) {
+                    return dir.isDirectory();
+                }
+            }, TrueFileFilter.INSTANCE);
+            return list.iterator().next();
+        }
+    }
+
+    private boolean copyReport(FilePath coverageDir, FilePath buildPath, BuildListener listener)
+            throws IOException, InterruptedException {
+        if (coverageDir.exists()) {
+            // search index.html recursively and copy its parent tree
+            final FilePath indexPath = new FilePath(coverageDir.act(new ScovFinder()));
+            final FilePath parentDir = indexPath.getParent();
             final FilePath toFile = buildPath.child(getReportFile());
-            parentDir.copyRecursiveTo("**/*", buildPath); // copy HTML report
-            coverageReport.child(getReportFile()).copyTo(toFile); // copy XML report
+            parentDir.copyRecursiveTo("**/*", buildPath.child("scoverage-report")); // copy HTML report
+            coverageDir.child(getReportFile()).copyTo(toFile); // copy XML report
             return true;
         } else {
             return false;
@@ -90,7 +114,9 @@ public class ScoveragePublisher extends Recorder {
             for (File f : list) {
                 String content = FileUtils.readFileToString(f);
                 String pattern = f.getParent().replaceAll(".*scoverage-report", "scoverage-report");
-                FileUtils.writeStringToFile(f, content.replaceAll("href=\".*" + pattern + "/", "href=\""));
+                String relativeFix = content.replaceAll("href=\"/", "href=\"")
+                                            .replaceAll("href=\".*" + pattern + "/", "href=\"");
+                FileUtils.writeStringToFile(f, relativeFix);
             }
             // Parse scoverage.xml
             File report = new File(path.child(reportFile).toURI());
