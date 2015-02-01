@@ -33,7 +33,7 @@ public class ScoverageBuildAction implements Action, StaplerProxy {
     }
 
     public String getUrlName() {
-        return "scoverage-report";
+        return ActionUrls.BUILD_URL.toString();
     }
 
     public Object getTarget() {

@@ -30,7 +30,7 @@ public class ScoverageProjectAction implements Action {
     }
 
     public String getUrlName() {
-        return "scoverage";
+        return ActionUrls.PROJECT_URL.toString();
     }
 
     public String getSearchUrl() {
@@ -59,7 +59,7 @@ public class ScoverageProjectAction implements Action {
         if (project.getLastBuild() != null && getDisplayName() != null) {
             String url = getLastSuccessfulBuildAction().getUrlName();
             FilePath path = new FilePath(project.getLastBuild().getRootDir()).child(url);
-            return new DirectoryBrowserSupport(this, path, "Scoverage HTML Report",  "", false);
+            return new DirectoryBrowserSupport(this, path, "Scoverage HTML Report", "", false);
         } else {
             return null;
         }

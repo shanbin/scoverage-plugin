@@ -1,12 +1,18 @@
 package org.jenkinsci.plugins.scoverage;
 
+import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.Extension;
 import hudson.Util;
-import hudson.model.*;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.Action;
+import hudson.model.BuildListener;
 import hudson.remoting.VirtualChannel;
-import hudson.tasks.*;
+import hudson.tasks.BuildStepDescriptor;
+import hudson.tasks.BuildStepMonitor;
+import hudson.tasks.Publisher;
+import hudson.tasks.Recorder;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
@@ -14,7 +20,10 @@ import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -70,6 +79,7 @@ public class ScoveragePublisher extends Recorder {
 
     private static final class ScovFinder implements FilePath.FileCallable<File> {
         private static final long serialVersionUID = 1;
+
         public File invoke(File dir, VirtualChannel channel) {
             Collection<File> list = FileUtils.listFiles(dir, new IOFileFilter() {
                 public boolean accept(File f) {
@@ -81,6 +91,7 @@ public class ScoveragePublisher extends Recorder {
                         return false;
                     }
                 }
+
                 public boolean accept(File dir, String s) {
                     return dir.isDirectory();
                 }
@@ -96,7 +107,7 @@ public class ScoveragePublisher extends Recorder {
             final FilePath indexPath = new FilePath(coverageDir.act(new ScovFinder()));
             final FilePath parentDir = indexPath.getParent();
             final FilePath toFile = buildPath.child(getReportFile());
-            parentDir.copyRecursiveTo("**/*", buildPath.child("scoverage-report")); // copy HTML report
+            parentDir.copyRecursiveTo("**/*", buildPath.child(ActionUrls.BUILD_URL.toString())); // copy HTML report
             coverageDir.child(getReportFile()).copyTo(toFile); // copy XML report
             return true;
         } else {
