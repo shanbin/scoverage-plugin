@@ -8,10 +8,13 @@ import hudson.model.Result;
 import org.kohsuke.stapler.StaplerProxy;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.export.ExportedBean;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
 
+@ExportedBean
 public class ScoverageBuildAction implements Action, StaplerProxy {
 
     private final AbstractBuild<?, ?> build;
@@ -40,6 +43,7 @@ public class ScoverageBuildAction implements Action, StaplerProxy {
         return null;
     }
 
+    @Exported(name = "scoverage")
     public ScoverageResult getResult() {
         return result;
     }

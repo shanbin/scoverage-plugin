@@ -8,7 +8,7 @@
     </parent>
 
     <artifactId>scoverage</artifactId>
-    <version>1.1.2-SNAPSHOT</version>
+    <version>1.1.2</version>
     <name>Scoverage Plugin</name>
     <packaging>hpi</packaging>
     <url>http://wiki.jenkins-ci.org/display/JENKINS/Scoverage+Plugin</url>
