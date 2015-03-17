@@ -57,11 +57,14 @@ public class ScoverageProjectAction implements Action {
 
     public DirectoryBrowserSupport doDynamic(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException, InterruptedException {
         if (project.getLastBuild() != null && getDisplayName() != null) {
-            String url = getLastSuccessfulBuildAction().getUrlName();
-            FilePath path = new FilePath(project.getLastBuild().getRootDir()).child(url);
-            return new DirectoryBrowserSupport(this, path, "Scoverage HTML Report", "", false);
-        } else {
-            return null;
+	    ScoverageBuildAction lastSuccessfulAction = getLastSuccessfulBuildAction();
+	    if (lastSuccessfulAction != null) {
+		String url = lastSuccessfulAction.getUrlName();
+		FilePath path = new FilePath(project.getLastBuild().getRootDir()).child(url);
+
+		return new DirectoryBrowserSupport(this, path, "Scoverage HTML Report", "", false);
+	    }
         }
+	return null;
     }
 }
