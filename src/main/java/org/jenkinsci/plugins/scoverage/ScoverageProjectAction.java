@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.scoverage;
 
 import hudson.FilePath;
+import hudson.Functions;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
@@ -22,7 +23,7 @@ public class ScoverageProjectAction implements Action {
     }
 
     public String getIconFileName() {
-        return "";
+        return Functions.getResourcePath()+"/plugin/scoverage/images/scoverage.png";
     }
 
     public String getDisplayName() {

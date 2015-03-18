@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.scoverage;
 
 import hudson.FilePath;
+import hudson.Functions;
 import hudson.model.AbstractBuild;
 import hudson.model.Action;
 import hudson.model.DirectoryBrowserSupport;
@@ -28,7 +29,7 @@ public class ScoverageBuildAction implements Action, StaplerProxy {
     }
 
     public String getIconFileName() {
-        return "";
+        return Functions.getResourcePath()+"/plugin/scoverage/images/scoverage.png";
     }
 
     public String getDisplayName() {
