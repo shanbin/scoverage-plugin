@@ -4,19 +4,19 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.Action;
-import hudson.model.BuildListener;
+import hudson.model.*;
 import hudson.remoting.VirtualChannel;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
+import jenkins.tasks.SimpleBuildStep;
+import jenkins.util.BuildListenerAdapter;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 
 /**
  */
-public class ScoveragePublisher extends Recorder {
+public class ScoveragePublisher extends Recorder implements SimpleBuildStep {
 
     private final String reportDir;
     private final String reportFile;
@@ -50,31 +50,36 @@ public class ScoveragePublisher extends Recorder {
     }
 
     @Override
-    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
+    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException {
         final File buildDir = build.getRootDir();
         final FilePath buildPath = new FilePath(buildDir);
         final FilePath workspace = build.getWorkspace();
+
+        perform(build, workspace, launcher, listener);
+
+        return true;
+    }
+
+    @Override
+    public void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
+        final File buildDir = run.getRootDir();
+        final FilePath buildPath = new FilePath(buildDir);
         FilePath coverageReportDir = workspace.child(reportDir);
 
         try {
             listener.getLogger().println("Publishing Scoverage XML and HTML report...");
 
-            final boolean reportExists = copyReport(coverageReportDir, buildPath, listener);
+            final boolean reportExists = copyReport(coverageReportDir, buildPath, new BuildListenerAdapter(listener));
             if (!reportExists) {
                 listener.getLogger().println("ERROR: cannot find scoverage report");
             }
 
-            ScoverageResult result = processReport(build, buildPath);
-            build.addAction(new ScoverageBuildAction(build, buildPath, result));
+            ScoverageResult result = processReport(run, buildPath);
+            run.addAction(new ScoverageBuildAction(run, buildPath, result));
 
         } catch (IOException e) {
-            Util.displayIOException(e, listener);
-            listener.getLogger().println("Unable to copy scoverage from " + coverageReportDir + " to " + buildPath);
-        } catch (Exception e) {
-            listener.getLogger().println(e.getCause());
+            throw new IOException("Unable to copy scoverage from " + coverageReportDir + " to " + buildPath, e);
         }
-
-        return true;
     }
 
     private static final class ScovFinder implements FilePath.FileCallable<File> {
@@ -98,6 +103,11 @@ public class ScoveragePublisher extends Recorder {
             }, TrueFileFilter.INSTANCE);
             return list.iterator().next();
         }
+
+        @Override
+        public void checkRoles(RoleChecker roleChecker) throws SecurityException {
+            //We don't require any roles to be checked?
+        }
     }
 
     private boolean copyReport(FilePath coverageDir, FilePath buildPath, BuildListener listener)
@@ -115,7 +125,7 @@ public class ScoveragePublisher extends Recorder {
         }
     }
 
-    private ScoverageResult processReport(AbstractBuild build, FilePath path) {
+    private ScoverageResult processReport(Run<?, ?> build, FilePath path) {
         String[] ext = {"html"};
         double statement = 0;
         double condition = 0;

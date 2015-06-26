@@ -2,10 +2,7 @@ package org.jenkinsci.plugins.scoverage;
 
 import hudson.FilePath;
 import hudson.Functions;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.Action;
-import hudson.model.DirectoryBrowserSupport;
+import hudson.model.*;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
@@ -16,10 +13,15 @@ import java.util.List;
 
 public class ScoverageProjectAction implements Action {
 
-    private final AbstractProject<?, ?> project;
+    private final Job<?, ?> job;
 
+    public ScoverageProjectAction(Job<?, ?> job) {
+        this.job = job;
+    }
+
+    @Deprecated
     public ScoverageProjectAction(AbstractProject<?, ?> project) {
-        this.project = project;
+        this((Job) project);
     }
 
     public String getIconFileName() {
@@ -39,7 +41,7 @@ public class ScoverageProjectAction implements Action {
     }
 
     public ScoverageBuildAction getLastSuccessfulBuildAction() {
-        AbstractBuild<?, ?> last = project.getLastSuccessfulBuild();
+        Run<?, ?> last = job.getLastSuccessfulBuild();
         if (last != null) {
             return last.getAction(ScoverageBuildAction.class);
         }
@@ -57,15 +59,17 @@ public class ScoverageProjectAction implements Action {
     }
 
     public DirectoryBrowserSupport doDynamic(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException, InterruptedException {
-        if (project.getLastBuild() != null && getDisplayName() != null) {
-	    ScoverageBuildAction lastSuccessfulAction = getLastSuccessfulBuildAction();
-	    if (lastSuccessfulAction != null) {
-		String url = lastSuccessfulAction.getUrlName();
-		FilePath path = new FilePath(project.getLastBuild().getRootDir()).child(url);
+        if (job.getLastBuild() != null && getDisplayName() != null) {
+            ScoverageBuildAction lastSuccessfulAction = getLastSuccessfulBuildAction();
 
-		return new DirectoryBrowserSupport(this, path, "Scoverage HTML Report", "", false);
-	    }
+            if (lastSuccessfulAction != null) {
+                String url = lastSuccessfulAction.getUrlName();
+                FilePath path = new FilePath(job.getLastBuild().getRootDir()).child(url);
+
+            return new DirectoryBrowserSupport(this, path, "Scoverage HTML Report", "", false);
+            }
         }
-	return null;
+
+        return null;
     }
 }
