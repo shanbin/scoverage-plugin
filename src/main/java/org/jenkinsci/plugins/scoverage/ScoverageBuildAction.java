@@ -2,7 +2,10 @@ package org.jenkinsci.plugins.scoverage;
 
 import hudson.FilePath;
 import hudson.Functions;
-import hudson.model.*;
+import hudson.model.Action;
+import hudson.model.DirectoryBrowserSupport;
+import hudson.model.Result;
+import hudson.model.Run;
 import jenkins.tasks.SimpleBuildStep;
 import org.kohsuke.stapler.StaplerProxy;
 import org.kohsuke.stapler.StaplerRequest;
