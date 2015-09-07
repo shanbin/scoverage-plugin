@@ -54,35 +54,30 @@ public class ScoveragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     @Override
-    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException {
-        final File buildDir = build.getRootDir();
-        final FilePath buildPath = new FilePath(buildDir);
-        final FilePath workspace = build.getWorkspace();
+    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener)
+        throws IOException, InterruptedException {
 
-        perform(build, workspace, launcher, listener);
+        listener.getLogger().println("Publishing Scoverage XML and HTML report ...");
+        perform(build, build.getWorkspace(), launcher, listener);
 
         return true;
     }
 
     @Override
-    public void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
+    public void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener)
+        throws InterruptedException, IOException {
+
         final File buildDir = run.getRootDir();
         final FilePath buildPath = new FilePath(buildDir);
-        FilePath coverageReportDir = workspace.child(reportDir);
+        final FilePath scovPath = workspace.child(reportDir);
 
         try {
-            listener.getLogger().println("Publishing Scoverage XML and HTML report...");
-
-            final boolean reportExists = copyReport(coverageReportDir, buildPath, new BuildListenerAdapter(listener));
-            if (!reportExists) {
-                listener.getLogger().println("ERROR: cannot find scoverage report");
-            }
-
+            copyReport(scovPath, buildPath, new BuildListenerAdapter(listener));
             ScoverageResult result = processReport(run, buildPath);
             run.addAction(new ScoverageBuildAction(run, buildPath, result));
-
         } catch (IOException e) {
-            throw new IOException("Unable to copy scoverage from " + coverageReportDir + " to " + buildPath, e);
+            listener.getLogger().println("Unable to copy scoverage report from " + scovPath + " to " + buildPath);
+            throw e;
         }
     }
 
@@ -93,8 +88,9 @@ public class ScoveragePublisher extends Recorder implements SimpleBuildStep {
             Collection<File> list = FileUtils.listFiles(dir, new IOFileFilter() {
                 public boolean accept(File f) {
                     try {
-                        return f.isFile() && f.getName().equals("index.html")
-                                          && FileUtils.readFileToString(f).contains("Scoverage Code Coverage");
+                        return f.isFile() &&
+                            f.getName().equals("index.html") &&
+                            FileUtils.readFileToString(f).contains("Scoverage Code Coverage");
                     } catch (IOException e) {
                         e.printStackTrace();
                         return false;
@@ -114,22 +110,29 @@ public class ScoveragePublisher extends Recorder implements SimpleBuildStep {
         }
     }
 
-    private boolean copyReport(FilePath coverageDir, FilePath buildPath, BuildListener listener)
-            throws IOException, InterruptedException {
-        if (coverageDir.exists()) {
-            // search index.html recursively and copy its parent tree
-            final FilePath indexPath = new FilePath(coverageDir.act(new ScovFinder()));
-            final FilePath parentDir = indexPath.getParent();
-            final FilePath toFile = buildPath.child(getReportFile());
-            parentDir.copyRecursiveTo("**/*", buildPath.child(ActionUrls.BUILD_URL.toString())); // copy HTML report
-            coverageDir.child(getReportFile()).copyTo(toFile); // copy XML report
-            return true;
-        } else {
-            return false;
+    private void copyReport(FilePath coverageDir, FilePath buildPath, BuildListener listener)
+        throws IOException, InterruptedException {
+        try {
+            if (coverageDir.exists()) {
+                // search index.html recursively and copy its parent tree
+                final FilePath indexPath = new FilePath(coverageDir.act(new ScovFinder()));
+                final FilePath indexDir = new FilePath(coverageDir.getChannel(), indexPath.getParent().getRemote());
+                final FilePath toFile = buildPath.child(getReportFile());
+                indexDir.copyRecursiveTo(buildPath.child(ActionUrls.BUILD_URL.toString())); // copy HTML report
+                coverageDir.child(getReportFile()).copyTo(toFile); // copy XML report
+            } else {
+                throw new IOException(coverageDir.getRemote() + " not exists");
+            }
+        } catch (IOException e) {
+            listener.getLogger().println(e.getMessage());
+            throw e;
+        } catch (InterruptedException e) {
+            listener.getLogger().println(e.getMessage());
+            throw e;
         }
     }
 
-    private ScoverageResult processReport(Run<?, ?> build, FilePath path) {
+    private ScoverageResult processReport(Run<?, ?> build, FilePath path) throws IOException, InterruptedException {
         String[] ext = {"html"};
         double statement = 0;
         double condition = 0;
@@ -160,8 +163,10 @@ public class ScoveragePublisher extends Recorder implements SimpleBuildStep {
                     break;
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            throw e;
+        } catch (InterruptedException e) {
+            throw e;
         }
         return new ScoverageResult(statement, condition, build.number);
     }
