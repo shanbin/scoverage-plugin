@@ -3,7 +3,6 @@ package org.jenkinsci.plugins.scoverage;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.BuildListener;
@@ -29,6 +28,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -54,31 +54,18 @@ public class ScoveragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     @Override
-    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener)
-        throws IOException, InterruptedException {
-
-        listener.getLogger().println("Publishing Scoverage XML and HTML report ...");
-        perform(build, build.getWorkspace(), launcher, listener);
-
-        return true;
-    }
-
-    @Override
     public void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener)
         throws InterruptedException, IOException {
+
+        listener.getLogger().println("Publishing Scoverage XML and HTML report ...");
 
         final File buildDir = run.getRootDir();
         final FilePath buildPath = new FilePath(buildDir);
         final FilePath scovPath = workspace.child(reportDir);
 
-        try {
-            copyReport(scovPath, buildPath, new BuildListenerAdapter(listener));
-            ScoverageResult result = processReport(run, buildPath);
-            run.addAction(new ScoverageBuildAction(run, buildPath, result));
-        } catch (IOException e) {
-            listener.getLogger().println("Unable to copy scoverage report from " + scovPath + " to " + buildPath);
-            throw e;
-        }
+        copyReport(scovPath, buildPath, new BuildListenerAdapter(listener));
+        ScoverageResult result = processReport(run, buildPath);
+        run.addAction(new ScoverageBuildAction(run, buildPath, result));
     }
 
     private static final class ScovFinder implements FilePath.FileCallable<File> {
@@ -101,7 +88,7 @@ public class ScoveragePublisher extends Recorder implements SimpleBuildStep {
                     return dir.isDirectory();
                 }
             }, TrueFileFilter.INSTANCE);
-            return list.iterator().next();
+            return list == null ? null : list.iterator().next();
         }
 
         @Override
@@ -111,24 +98,20 @@ public class ScoveragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     private void copyReport(FilePath coverageDir, FilePath buildPath, BuildListener listener)
-        throws IOException, InterruptedException {
-        try {
-            if (coverageDir.exists()) {
-                // search index.html recursively and copy its parent tree
-                final FilePath indexPath = new FilePath(coverageDir.act(new ScovFinder()));
+            throws IOException, InterruptedException {
+        if (coverageDir.exists()) {
+            final FilePath toFile = buildPath.child(getReportFile());
+            coverageDir.child(getReportFile()).copyTo(toFile); // copy XML report
+            // search index.html recursively and copy its parent tree
+            final FilePath indexPath = new FilePath(coverageDir.act(new ScovFinder()));
+            if (indexPath != null) {
                 final FilePath indexDir = new FilePath(coverageDir.getChannel(), indexPath.getParent().getRemote());
-                final FilePath toFile = buildPath.child(getReportFile());
                 indexDir.copyRecursiveTo(buildPath.child(ActionUrls.BUILD_URL.toString())); // copy HTML report
-                coverageDir.child(getReportFile()).copyTo(toFile); // copy XML report
             } else {
-                throw new IOException(coverageDir.getRemote() + " not exists");
+                listener.getLogger().println("Unable to find HTML reports under " + coverageDir.getRemote());
             }
-        } catch (IOException e) {
-            listener.getLogger().println(e.getMessage());
-            throw e;
-        } catch (InterruptedException e) {
-            listener.getLogger().println(e.getMessage());
-            throw e;
+        } else {
+            throw new IOException(coverageDir.getRemote() + " not exists");
         }
     }
 
@@ -136,37 +119,31 @@ public class ScoveragePublisher extends Recorder implements SimpleBuildStep {
         String[] ext = {"html"};
         double statement = 0;
         double condition = 0;
-        try {
-            // Fix HTML reports to use relative href
-            Collection<File> list = FileUtils.listFiles(new File(path.toURI()), ext, true);
-            for (File f : list) {
-                String content = FileUtils.readFileToString(f);
-                String pattern = f.getParent().replaceAll(".*scoverage-report", "scoverage-report");
-                String relativeFix = content.replaceAll("href=\"/", "href=\"")
-                                            .replaceAll("href=\".*" + pattern + "/", "href=\"");
-                FileUtils.writeStringToFile(f, relativeFix);
+        // Fix HTML reports to use relative href
+        Collection<File> list = FileUtils.listFiles(new File(path.toURI()), ext, true);
+        for (File f : list) {
+            String content = FileUtils.readFileToString(f);
+            String pattern = f.getParent().replaceAll(".*scoverage-report", "scoverage-report");
+            String relativeFix = content.replaceAll("href=\"/", "href=\"")
+                                        .replaceAll("href=\".*" + pattern + "/", "href=\"");
+            FileUtils.writeStringToFile(f, relativeFix);
+        }
+        // Parse scoverage.xml
+        File report = new File(path.child(reportFile).toURI());
+        Pattern pattern = Pattern.compile("^.* statement-rate=\"(.+?)\" branch-rate=\"(.+?)\"");
+        BufferedReader in = new BufferedReader(new FileReader(report));
+        String line;
+        while ((line = in.readLine()) != null) {
+            boolean found = false;
+            Matcher matcher = pattern.matcher(line);
+            while (matcher.find()) {
+                statement = Double.parseDouble(matcher.group(1));
+                condition = Double.parseDouble(matcher.group(2));
+                found = true;
             }
-            // Parse scoverage.xml
-            File report = new File(path.child(reportFile).toURI());
-            Pattern pattern = Pattern.compile("^.* statement-rate=\"(.+?)\" branch-rate=\"(.+?)\"");
-            BufferedReader in = new BufferedReader(new FileReader(report));
-            String line;
-            while ((line = in.readLine()) != null) {
-                boolean found = false;
-                Matcher matcher = pattern.matcher(line);
-                while (matcher.find()) {
-                    statement = Double.parseDouble(matcher.group(1));
-                    condition = Double.parseDouble(matcher.group(2));
-                    found = true;
-                }
-                if (found) {
-                    break;
-                }
+            if (found) {
+                break;
             }
-        } catch (IOException e) {
-            throw e;
-        } catch (InterruptedException e) {
-            throw e;
         }
         return new ScoverageResult(statement, condition, build.number);
     }
@@ -207,8 +184,8 @@ public class ScoveragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     @Override
-    public Action getProjectAction(AbstractProject<?, ?> project) {
-        return new ScoverageProjectAction(project);
+    public Collection<? extends Action> getProjectActions(AbstractProject<?,?> project) {
+        return Collections.emptySet();
     }
 }
 

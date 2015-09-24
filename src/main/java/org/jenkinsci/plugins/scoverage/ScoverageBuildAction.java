@@ -32,7 +32,7 @@ public class ScoverageBuildAction implements Action, StaplerProxy, SimpleBuildSt
     }
 
     public String getIconFileName() {
-        return Functions.getResourcePath()+"/plugin/scoverage/images/scoverage.png";
+        return Functions.getResourcePath() + "/plugin/scoverage/images/scoverage.png";
     }
 
     public String getDisplayName() {
@@ -80,6 +80,5 @@ public class ScoverageBuildAction implements Action, StaplerProxy, SimpleBuildSt
     @Override
     public Collection<? extends Action> getProjectActions() {
         return Collections.<Action>singleton(new ScoverageProjectAction(run.getParent()));
-
     }
 }

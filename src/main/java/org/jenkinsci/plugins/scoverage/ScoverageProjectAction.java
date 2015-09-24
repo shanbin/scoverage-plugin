@@ -23,13 +23,8 @@ public class ScoverageProjectAction implements Action {
         this.job = job;
     }
 
-    @Deprecated
-    public ScoverageProjectAction(AbstractProject<?, ?> project) {
-        this((Job) project);
-    }
-
     public String getIconFileName() {
-        return Functions.getResourcePath()+"/plugin/scoverage/images/scoverage.png";
+        return Functions.getResourcePath() + "/plugin/scoverage/images/scoverage.png";
     }
 
     public String getDisplayName() {
