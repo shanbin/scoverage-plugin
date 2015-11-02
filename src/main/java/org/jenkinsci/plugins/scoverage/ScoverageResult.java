@@ -28,4 +28,9 @@ public class ScoverageResult {
     public int getNum() {
         return num;
     }
+
+    @Override
+    public String toString() {
+        return String.format("%.1f%% / %.1f%%", statement, condition);
+    }
 }

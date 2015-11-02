@@ -1,0 +1,18 @@
+<j:jelly xmlns:j="jelly:core">
+
+  <j:choose>
+    <j:when test="${it != null}">
+      <j:set var="data" value="${it.getData(job)}" />
+    </j:when>
+    <j:otherwise>
+      <j:set var="data" value="N/A" />
+    </j:otherwise>
+  </j:choose>
+
+  <td align="center">
+    <a href="${rootURL}/${job.url}lastSuccessfulBuild/scoverage-report/">
+      ${data}
+    </a>
+  </td>
+
+</j:jelly>
