@@ -125,7 +125,7 @@ public class ScoveragePublisher extends Recorder implements SimpleBuildStep {
             String content = FileUtils.readFileToString(f);
             String pattern = f.getParent().replaceAll(".*scoverage-report", "scoverage-report");
             String relativeFix = content.replaceAll("href=\"/", "href=\"")
-                                        .replaceAll("href=\".*" + pattern + "/", "href=\"");
+                                        .replaceAll(Matcher.quoteReplacement("href=\".*" + pattern + "/"), "href=\"");
             FileUtils.writeStringToFile(f, relativeFix);
         }
         // Parse scoverage.xml
