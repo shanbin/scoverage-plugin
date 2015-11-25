@@ -123,9 +123,14 @@ public class ScoveragePublisher extends Recorder implements SimpleBuildStep {
         Collection<File> list = FileUtils.listFiles(new File(path.toURI()), ext, true);
         for (File f : list) {
             String content = FileUtils.readFileToString(f);
-            String pattern = f.getParent().replaceAll(".*scoverage-report", "scoverage-report");
+
+            // Get filename with HTML styled path separator
+            String pattern = f.getParent().replaceAll(File.separator, "/")
+                .replaceAll(".*scoverage-report", "scoverage-report");
+
             String relativeFix = content.replaceAll("href=\"/", "href=\"")
-                                        .replaceAll("href=\".*" + pattern + "/", "href=\"");
+                .replaceAll("href=\".*" + pattern + "/", "href=\"");
+
             FileUtils.writeStringToFile(f, relativeFix);
         }
         // Parse scoverage.xml
