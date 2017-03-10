@@ -9,21 +9,35 @@
             <table style="padding: 0 10px; padding-top: 5px; width:450px;">
                 <tr>
                     <th align="left">Statement Coverage</th>
-                    <td align="right">${last.result.statement}%</td>
+                    <td style="float: right; text-align: right;">${last.result.statement}%</td>
                 </tr>
+            </table>
+            <table style="padding: 0 10px; padding-top: 5px; width:450px;">
                 <tr>
                     <td width="${last.result.statement}%" style="background-color:#81F781;">&amp;nbsp;</td>
-                    <td width="${100-last.result.statement}%" style="background-color:#F78181;">&amp;nbsp;</td>
+                    <j:if test="${last.result.statement == 100}">
+                        <td width="${100-last.result.statement}%" style="display:none;background-color:#F78181;">&amp;nbsp;</td>
+                    </j:if>
+                    <j:if test="${last.result.statement != 100}">
+                        <td width="${100-last.result.statement}%" style="background-color:#F78181;">&amp;nbsp;</td>
+                    </j:if>
                 </tr>
             </table>
             <table style="padding: 0 10px; padding-top: 5px; width:450px;">
                 <tr>
                     <th align="left">Branch Coverage</th>
-                    <td align="right">${last.result.condition}%</td>
+                    <td style="float: right; text-align: right;">${last.result.condition}%</td>
                 </tr>
+            </table>
+            <table style="padding: 0 10px; padding-top: 5px; width:450px;">
                 <tr>
                     <td width="${last.result.condition}%" style="background-color:#81F781;">&amp;nbsp;</td>
-                    <td width="${100-last.result.condition}%" style="background-color:#F78181;">&amp;nbsp;</td>
+                    <j:if test="${last.result.condition == 100}">
+                        <td width="${100-last.result.condition}%" style="display:none;background-color:#F78181;">&amp;nbsp;</td>
+                    </j:if>
+                    <j:if test="${last.result.condition != 100}">
+                        <td width="${100-last.result.condition}%" style="background-color:#F78181;">&amp;nbsp;</td>
+                    </j:if>
                 </tr>
             </table>
             <p/>
