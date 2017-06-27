@@ -3,6 +3,8 @@ package org.jenkinsci.plugins.scoverage;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
 
+import java.util.Locale;
+
 @ExportedBean
 public class ScoverageResult {
     final private double statement;
@@ -31,6 +33,6 @@ public class ScoverageResult {
 
     @Override
     public String toString() {
-        return String.format("%.1f%% / %.1f%%", statement, condition);
+        return String.format(Locale.US,"%.1f%% / %.1f%%", statement, condition);
     }
 }
