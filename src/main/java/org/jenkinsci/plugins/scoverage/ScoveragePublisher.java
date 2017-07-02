@@ -116,23 +116,13 @@ public class ScoveragePublisher extends Recorder implements SimpleBuildStep {
     }
 
     private ScoverageResult processReport(Run<?, ?> build, FilePath path) throws IOException, InterruptedException {
-        String[] ext = {"html"};
+
         double statement = 0;
         double condition = 0;
         // Fix HTML reports to use relative href
-        Collection<File> list = FileUtils.listFiles(new File(path.toURI()), ext, true);
-        for (File f : list) {
-            String content = FileUtils.readFileToString(f);
+        HTMLRelativeHref fixhref = new HTMLRelativeHref(path);
+        fixhref.process();
 
-            // Get filename with HTML styled path separator
-            String pattern = f.getParent().replaceAll(File.separator, "/")
-                .replaceAll(".*scoverage-report", "scoverage-report");
-
-            String relativeFix = content.replaceAll("href=\"/", "href=\"")
-                .replaceAll("href=\".*" + pattern + "/", "href=\"");
-
-            FileUtils.writeStringToFile(f, relativeFix);
-        }
         // Parse scoverage.xml
         File report = new File(path.child(reportFile).toURI());
         Pattern pattern = Pattern.compile("^.* statement-rate=\"(.+?)\" branch-rate=\"(.+?)\"");
