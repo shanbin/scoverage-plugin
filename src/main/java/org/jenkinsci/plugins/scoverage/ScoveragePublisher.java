@@ -88,7 +88,7 @@ public class ScoveragePublisher extends Recorder implements SimpleBuildStep {
                     return dir.isDirectory();
                 }
             }, TrueFileFilter.INSTANCE);
-            return list == null ? null : list.iterator().next();
+            return (list == null || list.isEmpty()) ? null : list.iterator().next();
         }
 
         @Override
