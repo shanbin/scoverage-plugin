@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 @ExportedBean
-public class ScoverageBuildAction implements Action, StaplerProxy, SimpleBuildStep.LastBuildAction {
+public class ScoverageBuildAction implements Action, SimpleBuildStep.LastBuildAction {
 
     private final Run<?, ?> run;
     private final FilePath buildPath;
@@ -41,10 +41,6 @@ public class ScoverageBuildAction implements Action, StaplerProxy, SimpleBuildSt
 
     public String getUrlName() {
         return ActionUrls.BUILD_URL.toString();
-    }
-
-    public Object getTarget() {
-        return null;
     }
 
     @Exported(name = "scoverage")
